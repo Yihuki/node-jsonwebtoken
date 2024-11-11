@@ -111,32 +111,6 @@ module.exports = function (payload, secretOrPrivateKey, options, callback) {
     return failure(new Error('secretOrPrivateKey must have a value'));
   }
 
-  if (secretOrPrivateKey != null && !(secretOrPrivateKey instanceof KeyObject)) {
-    try {
-      secretOrPrivateKey = createPrivateKey(secretOrPrivateKey)
-    } catch (_) {
-      try {
-        secretOrPrivateKey = createSecretKey(typeof secretOrPrivateKey === 'string' ? Buffer.from(secretOrPrivateKey) : secretOrPrivateKey)
-      } catch (_) {
-        return failure(new Error('secretOrPrivateKey is not valid key material'));
-      }
-    }
-  }
-
-  if (header.alg.startsWith('HS') && secretOrPrivateKey.type !== 'secret') {
-    return failure(new Error((`secretOrPrivateKey must be a symmetric key when using ${header.alg}`)))
-  } else if (/^(?:RS|PS|ES)/.test(header.alg)) {
-    if (secretOrPrivateKey.type !== 'private') {
-      return failure(new Error((`secretOrPrivateKey must be an asymmetric key when using ${header.alg}`)))
-    }
-    if (!options.allowInsecureKeySizes &&
-      !header.alg.startsWith('ES') &&
-      secretOrPrivateKey.asymmetricKeyDetails !== undefined && //KeyObject.asymmetricKeyDetails is supported in Node 15+
-      secretOrPrivateKey.asymmetricKeyDetails.modulusLength < 2048) {
-      return failure(new Error(`secretOrPrivateKey has a minimum key size of 2048 bits for ${header.alg}`));
-    }
-  }
-
   if (typeof payload === 'undefined') {
     return failure(new Error('payload is required'));
   } else if (isObjectPayload) {
